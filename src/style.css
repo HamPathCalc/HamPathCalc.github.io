@@ -1,0 +1,85 @@
+body {
+    font-family: 'Roboto Mono', monospace;
+}
+
+#graph-area {
+    position: relative;
+    border: 2px solid black;
+    height: 80vh;
+    width: 60%;
+}
+
+.node {
+    position: absolute;
+    z-index: 2;
+
+    width: 40px;
+    height: 40px;
+
+    border: 2px solid black;
+    border-radius: 50%;
+    background-color: white;
+
+    transform: translate(-50%, -50%);
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.edge {
+    position: absolute;
+    z-index: 1;
+
+    height: 2px;
+    background-color: black;
+
+    transform-origin: top left;
+}
+
+.clickable {
+    cursor: pointer;
+}
+
+.index-switch {
+    display: inline-flex;
+    margin: 0;
+    padding: 3px;
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    border-radius: 7px;
+    background-color: rgba(0, 0, 0, 0.2);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.index-switch input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.index-switch label {
+    min-width: 68px;
+    padding: 5px 10px;
+    border-radius: 4px;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.8rem;
+    /*font-weight: 600;*/
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.index-switch label:hover {
+    color: white;
+    background-color: rgba(0, 0, 0, 0.18);
+}
+
+.index-switch input:checked + label {
+    color: white;
+    background-color: rgba(0, 0, 0, 0.18);
+}
+
+.index-switch input:focus-visible + label {
+    outline: 2px solid white;
+    outline-offset: 2px;
+}

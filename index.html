@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>HamPathCalc</title>
+        <link rel="icon" type="image/png" href="./img/logo.png">
+        <link rel="stylesheet" href="./node_modules/bootstrap/dist/css/bootstrap.min.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+        <link rel="stylesheet" href="./src/style.css"> 
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet">
+    </head>
+    <body>
+        <nav class="navbar bg-body-secondary">
+            <div class="container-fluid px-5">
+                <a class="navbar-brand" href="#">
+                <img src="img/logo.png" alt="Logo" width="30" height="24" class="align-text-top">
+                <div class="d-inline px-1">Hamilton Path Calculator</div>
+                </a>
+            </div>
+        </nav>
+        <nav class="navbar bg-success">
+            <div class="container-fluid">
+                <ul class="nav justify-content-center">
+                    <li class="nav-item px-2">
+                        <button id="add-node" type="button" class="btn btn-light" onclick="onNodeButtonClick()">
+                            <i class="bi bi-node-plus"></i>
+                            add a node
+                        </button>
+                    </li>
+                    <li class="nav-item px-2">
+                        <button id="add-edge" type="button" class="btn btn-light" onclick="onEdgeButtonClick()">
+                            <i class="bi bi-dash"></i>
+                            add an edge
+                        </button>
+                    </li>
+                    <li class="nav-item px-2">
+                        <button id="remove-item" type="button" class="btn btn-danger" onclick="onRemoveButtonClick()">
+                            <i class="bi bi-trash3-fill"></i>
+                            remove a node/an edge
+                        </button>
+                    </li>
+                    <li class="nav-item px-2">
+                        <button id="clean-all" type="button" class="btn btn-danger" onclick="onCleanAllButtonClick()">
+                            <i class="bi bi-trash3-fill"></i>
+                            clean all
+                        </button>
+                    </li>
+                </ul>
+                <ul class="nav justify-content-center">
+                    <li class="nav-item px-2">
+                        <fieldset class="index-switch" aria-label="Indexing mode">
+                            <legend class="visually-hidden">Indexing mode</legend>
+                            <input type="radio" name="index-mode" id="zero-index" checked>
+                            <label for="zero-index">0-index</label>
+                            <input type="radio" name="index-mode" id="one-index">
+                            <label for="one-index">1-index</label>
+                        </fieldset>
+                    </li>
+                </ul>
+                </div>
+            </div>
+        </nav>
+        <div id="graph-area" class="container rounded-3 my-3 p-3">
+        </div>
+
+
+        <script src="./node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="./src/script.js"></script>
+    </body>
+</html>
