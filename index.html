@@ -15,7 +15,7 @@
     <body>
         <nav class="navbar bg-body-secondary">
             <div class="container-fluid px-5">
-                <a class="navbar-brand" href="#">
+                <a class="navbar-brand" href="">
                 <img src="img/logo.png" alt="Logo" width="30" height="24" class="align-text-top">
                 <div class="d-inline px-1">Hamilton Path Calculator</div>
                 </a>
@@ -63,8 +63,22 @@
                 </div>
             </div>
         </nav>
-        <div id="graph-area" class="container rounded-3 my-3 p-3">
-        </div>
+        <main class="container-fluid app-layout py-3">
+            <div class="row g-3 h-100">
+                <section class="col-2 h-100">
+                    <div id="top-panel" class="bg-success rounded-3 h-100">
+                        <p class="p-2">TBA Hamiltonian Path Methods</p>
+                    </div>
+                </section>
+                <section class="col-8 h-100">
+                    <div id="graph-area" class="rounded-3 p-3 h-100">
+                    </div>
+                </section>
+                <section class="col-2 h-100">
+                    <textarea id="graph-txt" class="form-control h-100" readonly aria-label="Graph as text" placeholder="Currently readonly"></textarea>
+                </section>
+            </div>
+        </main>
 
 
         <script src="./node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>

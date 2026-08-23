@@ -1,5 +1,7 @@
 const graphArea = document.getElementById("graph-area");
-const addNodeButton = document.getElementById("add-node");
+const graphTxt = document.getElementById("graph-txt");
+const oneIndex = document.getElementById("one-index");
+const zeroIndex = document.getElementById("zero-index");
 
 let nodeBeingPlaced = null;
 let selectingNode = false;
@@ -97,6 +99,7 @@ function onCleanAllButtonClick() {
     resetToDefaults();
     nodeIdCounter = 0;
     nodeToInsert = Infinity;
+    updateGraphTxt();
 }
 
 //remove item
@@ -114,21 +117,28 @@ graphArea.addEventListener("click", (event) => {
             return node;
         }
     });
+    const edges = document.querySelectorAll(".edge");
 
     if (clickedNode) {
         nodeToInsert = parseInt(clickedNode.id);
+        for (const edge of edges) {
+            if (edge.id.includes(clickedNode.id)) {
+                edge.remove();
+            }
+        }
         clickedNode.remove();
     } else if (event.target.closest(".edge")) {
         event.target.closest(".edge").remove();
     }
     deletingItem = false;
     const nodes = document.querySelectorAll(".node");
-    const edges = document.querySelectorAll(".edge");
+    
     for (const edge of edges) {
         edge.classList.remove("clickable");
     }
     button = document.getElementById("remove-item");
     button.style.backgroundColor = "#dc3545";
+    updateGraphTxt();
 });
 
 //drag node
@@ -164,6 +174,7 @@ graphArea.addEventListener("click", (event) => {
     button = document.getElementById("add-node");
     button.style.backgroundColor = "#f8f9fa";
     nodeToInsert = Infinity;
+    updateGraphTxt();
 });
 
 //add edge
@@ -195,6 +206,7 @@ graphArea.addEventListener("click", (event) => {
         button = document.getElementById("add-edge");
         button.style.backgroundColor = "#f8f9fa";
     }
+    updateGraphTxt();
 });
 
 /*graphArea.addEventListener("click", (event) => {
@@ -265,3 +277,28 @@ graphArea.addEventListener("mouseup", (event) => {
     nodeToDrag = null;
     draggingNode = false;
 });
+
+oneIndex.addEventListener("click", () => {
+    updateGraphTxt();
+});
+
+zeroIndex.addEventListener("click", () => {
+    updateGraphTxt();
+});
+
+//update graph text area
+function updateGraphTxt() {
+    const nodes = document.querySelectorAll(".node");
+    const edges = document.querySelectorAll(".edge");
+    let n = nodes.length;
+    let graphText = `${n}\n`;
+    for (const edge of edges) {
+        const [node1_id, node2_id] = edge.id.split("_");
+        if (oneIndex.checked) {
+            graphText += `${parseInt(node1_id) + 1} ${parseInt(node2_id) + 1}\n`;
+        } else {
+            graphText += `${node1_id} ${node2_id}\n`;
+        }
+    }
+    graphTxt.value = graphText;
+}
