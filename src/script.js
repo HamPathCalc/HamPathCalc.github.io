@@ -2,6 +2,7 @@ const graphArea = document.getElementById("graph-area");
 const graphTxt = document.getElementById("graph-txt");
 const oneIndex = document.getElementById("one-index");
 const zeroIndex = document.getElementById("zero-index");
+const fixInPlace = document.getElementById("fix-in-place");
 
 let nodeBeingPlaced = null;
 let selectingNode = false;
@@ -11,6 +12,86 @@ let deletingItem = false;
 let nodeToInsert = Infinity;
 let nodeToDrag = null;
 let draggingNode = false;
+
+function setNodePosition(node, clientX, clientY) {
+    const graphRect = graphArea.getBoundingClientRect();
+    const graphStyle = getComputedStyle(graphArea);
+    const borderLeft = parseFloat(graphStyle.borderLeftWidth);
+    const borderTop = parseFloat(graphStyle.borderTopWidth);
+    const graphWidth = graphArea.clientWidth;
+    const graphHeight = graphArea.clientHeight;
+    const nodeRadiusX = node.offsetWidth / 2;
+    const nodeRadiusY = node.offsetHeight / 2;
+    const x = Math.max(nodeRadiusX, Math.min(
+        clientX - graphRect.left - borderLeft,
+        graphWidth - nodeRadiusX
+    ));
+    const y = Math.max(nodeRadiusY, Math.min(
+        clientY - graphRect.top - borderTop,
+        graphHeight - nodeRadiusY
+    ));
+
+    node.style.left = `${x / graphWidth * 100}%`;
+    node.style.top = `${y / graphHeight * 100}%`;
+}
+
+function constrainNode(node) {
+    const graphWidth = graphArea.clientWidth;
+    const graphHeight = graphArea.clientHeight;
+    const nodeRadiusX = node.offsetWidth / 2;
+    const nodeRadiusY = node.offsetHeight / 2;
+    const x = Math.max(nodeRadiusX, Math.min(node.offsetLeft, graphWidth - nodeRadiusX));
+    const y = Math.max(nodeRadiusY, Math.min(node.offsetTop, graphHeight - nodeRadiusY));
+
+    node.style.left = `${x / graphWidth * 100}%`;
+    node.style.top = `${y / graphHeight * 100}%`;
+}
+
+function placeNodeRandomly(node) {
+    const graphWidth = graphArea.clientWidth;
+    const graphHeight = graphArea.clientHeight;
+    const nodeRadiusX = node.offsetWidth / 2;
+    const nodeRadiusY = node.offsetHeight / 2;
+    const x = nodeRadiusX + Math.random() * (graphWidth - 2 * nodeRadiusX);
+    const y = nodeRadiusY + Math.random() * (graphHeight - 2 * nodeRadiusY);
+
+    node.style.left = `${x / graphWidth * 100}%`;
+    node.style.top = `${y / graphHeight * 100}%`;
+}
+
+function updateEdgePosition(edge) {
+    const [node1Id, node2Id] = edge.id.split("_");
+    const node1 = document.getElementById(node1Id);
+    const node2 = document.getElementById(node2Id);
+    const graphRect = graphArea.getBoundingClientRect();
+    const node1Rect = node1.getBoundingClientRect();
+    const node2Rect = node2.getBoundingClientRect();
+    const node1x = node1Rect.left + node1Rect.width / 2 - graphRect.left;
+    const node1y = node1Rect.top + node1Rect.height / 2 - graphRect.top;
+    const node2x = node2Rect.left + node2Rect.width / 2 - graphRect.left;
+    const node2y = node2Rect.top + node2Rect.height / 2 - graphRect.top;
+    const deltaX = node2x - node1x;
+    const deltaY = node2y - node1y;
+    const centerDistance = Math.hypot(deltaX, deltaY);
+    if (centerDistance === 0) {
+        return;
+    }
+
+    edge.style.left = `${node1x}px`;
+    edge.style.top = `${node1y}px`;
+    edge.style.width = `${centerDistance}px`;
+    edge.style.transform = `rotate(${Math.atan2(deltaY, deltaX) * 180 / Math.PI}deg)`;
+}
+
+const graphResizeObserver = new ResizeObserver(() => {
+    for (const node of graphArea.querySelectorAll(".node")) {
+        constrainNode(node);
+    }
+    for (const edge of graphArea.querySelectorAll(".edge")) {
+        updateEdgePosition(edge);
+    }
+});
+graphResizeObserver.observe(graphArea);
 
 function resetToDefaults() {
     nodeBeingPlaced = null;
@@ -30,29 +111,11 @@ function makeEdge(node1, node2) {
         return;
     }
 
-    const graphRect = graphArea.getBoundingClientRect();
-    const node1Rect = node1.getBoundingClientRect();
-    const node2Rect = node2.getBoundingClientRect();
-    const node1x = node1Rect.left + node1Rect.width / 2 - graphRect.left;
-    const node1y = node1Rect.top + node1Rect.height / 2 - graphRect.top;
-    const node2x = node2Rect.left + node2Rect.width / 2 - graphRect.left;
-    const node2y = node2Rect.top + node2Rect.height / 2 - graphRect.top;
-    const deltaX = node2x - node1x;
-    const deltaY = node2y - node1y;
-    const centerDistance = Math.hypot(deltaX, deltaY);
-    if (centerDistance === 0) {
-        return;
-    }
-    const angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
-
     const edge = document.createElement("div");
     edge.classList.add("edge");
-    edge.style.left = `${node1x}px`;
-    edge.style.top = `${node1y}px`;
-    edge.style.width = `${centerDistance}px`;
-    edge.style.transform = `rotate(${angle}deg)`;
     edge.id = `${node1.id}_${node2.id}`;
     graphArea.appendChild(edge);
+    updateEdgePosition(edge);
 
     node1.style.backgroundColor = "white";
     node2.style.backgroundColor = "white";
@@ -70,6 +133,7 @@ function onNodeButtonClick() {
     nodeBeingPlaced.classList.add("node");
     nodeBeingPlaced.classList.add("clickable");
     nodeBeingPlaced.id = nodeToInsert !== Infinity ? nodeToInsert : nodeIdCounter++;
+    nodeBeingPlaced.textContent = nodeBeingPlaced.id;
 
     graphArea.appendChild(nodeBeingPlaced);
 }
@@ -147,13 +211,7 @@ graphArea.addEventListener("mousemove", (event) => {
         return;
     }
 
-    const rect = graphArea.getBoundingClientRect();
-
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-
-    nodeBeingPlaced.style.left = `${x}px`;
-    nodeBeingPlaced.style.top = `${y}px`;
+    setNodePosition(nodeBeingPlaced, event.clientX, event.clientY);
 });
 
 //fix node in place
@@ -162,13 +220,7 @@ graphArea.addEventListener("click", (event) => {
         return;
     }
 
-    const rect = graphArea.getBoundingClientRect();
-
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-
-    nodeBeingPlaced.style.left = `${x}px`;
-    nodeBeingPlaced.style.top = `${y}px`;
+    setNodePosition(nodeBeingPlaced, event.clientX, event.clientY);
 
     nodeBeingPlaced = null;
     button = document.getElementById("add-node");
@@ -226,7 +278,6 @@ graphArea.addEventListener("mousedown", (event) => {
         return;
     }
     draggingNode = true;
-    console.log(nodeToDrag);
 });
 
 graphArea.addEventListener("mousemove", (event) => {
@@ -234,40 +285,15 @@ graphArea.addEventListener("mousemove", (event) => {
         return;
     }
 
-    const rect = graphArea.getBoundingClientRect();
     const edges = document.querySelectorAll(".edge");
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-    const node_id = nodeToDrag.id;
+    setNodePosition(nodeToDrag, event.clientX, event.clientY);
+    const nodeId = nodeToDrag.id;
     for (const edge of edges) {
-        const edge_id = edge.id;
-        const [node1_id, node2_id] = edge_id.split("_");
-        if(node1_id === node_id || node2_id === node_id) {
-            const node1 = document.getElementById(node1_id);
-            const node2 = document.getElementById(node2_id);
-            const node1Rect = node1.getBoundingClientRect();
-            const node2Rect = node2.getBoundingClientRect();
-            const graphRect = graphArea.getBoundingClientRect();
-            const node1x = node1Rect.left + node1Rect.width / 2 - graphRect.left;
-            const node1y = node1Rect.top + node1Rect.height / 2 - graphRect.top;
-            const node2x = node2Rect.left + node2Rect.width / 2 - graphRect.left;
-            const node2y = node2Rect.top + node2Rect.height / 2 - graphRect.top;
-            const deltaX = node2x - node1x;
-            const deltaY = node2y - node1y;
-            const centerDistance = Math.hypot(deltaX, deltaY);
-            if (centerDistance === 0) {
-                return;
-            }
-            const angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
-            edge.style.left = `${node1x}px`;
-            edge.style.top = `${node1y}px`;
-            edge.style.width = `${centerDistance}px`;
-            edge.style.transform = `rotate(${angle}deg)`;
+        const [node1Id, node2Id] = edge.id.split("_");
+        if (node1Id === nodeId || node2Id === nodeId) {
+            updateEdgePosition(edge);
         }
     }
-
-    nodeToDrag.style.left = `${x}px`;
-    nodeToDrag.style.top = `${y}px`;
 });
 
 graphArea.addEventListener("mouseup", (event) => {
@@ -300,5 +326,55 @@ function updateGraphTxt() {
             graphText += `${node1_id} ${node2_id}\n`;
         }
     }
+    for (const node of nodes) {
+        node.textContent = oneIndex.checked ? parseInt(node.id) + 1 : node.id;
+    }
     graphTxt.value = graphText;
+}
+
+function onGenerateButtonClick() {
+    const nodePositions = new Map();
+    if (fixInPlace.checked) {
+        for (const node of graphArea.querySelectorAll(".node")) {
+            nodePositions.set(node.id, {
+                left: node.style.left,
+                top: node.style.top
+            });
+        }
+    }
+
+    graphArea.replaceChildren();
+    const graph_text = document.getElementById("graph-txt");
+    const graph = graph_text.value.trim().split("\n");
+    let n = parseInt(graph[0]);
+    let n_edges = graph.length - 1;
+    for (let i = 0; i < n; i++) {
+            const node = document.createElement("div");
+            node.classList.add("node");
+            node.classList.add("clickable");
+            node.id = i;
+            node.textContent = zeroIndex.checked ? node.id : parseInt(node.id) + 1;
+            graphArea.appendChild(node);
+            const savedPosition = nodePositions.get(node.id);
+            if (savedPosition) {
+                node.style.left = savedPosition.left;
+                node.style.top = savedPosition.top;
+            } else {
+                placeNodeRandomly(node);
+            }
+        }
+    for (let i = 1; i <= n_edges; i++) {
+        const [node1_id, node2_id] = graph[i].trim().split(/\s+/);
+        const indexOffset = oneIndex.checked ? 1 : 0;
+        const node1 = document.getElementById(parseInt(node1_id) - indexOffset);
+        const node2 = document.getElementById(parseInt(node2_id) - indexOffset);
+        if (node1 && node2) {
+            makeEdge(node1, node2);
+        }
+    }
+    updateGraphTxt();
+}
+
+function onCalcButtonClick() {
+    alert("Mrzim svoj život")
 }
