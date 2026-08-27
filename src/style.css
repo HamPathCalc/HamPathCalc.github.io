@@ -158,6 +158,11 @@ body {
         height: 33.3333% !important;
     }
 
+    .app-layout > .row > section > .button-group {
+        height: 40% !important;
+        margin-bottom: 5% !important;
+    }
+
     .index-controls {
         width: 100%;
     }
