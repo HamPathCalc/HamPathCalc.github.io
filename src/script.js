@@ -1,3 +1,5 @@
+//const fs = require("fs");
+
 const graphArea = document.getElementById("graph-area");
 const graphTxt = document.getElementById("graph-txt");
 const oneIndex = document.getElementById("one-index");
@@ -12,6 +14,8 @@ let deletingItem = false;
 let nodeToInsert = Infinity;
 let nodeToDrag = null;
 let draggingNode = false;
+let pyodide = null;
+let pyodideReady = null;
 
 function setNodePosition(node, clientX, clientY) {
     const graphRect = graphArea.getBoundingClientRect();
@@ -133,7 +137,7 @@ function onNodeButtonClick() {
     nodeBeingPlaced.classList.add("node");
     nodeBeingPlaced.classList.add("clickable");
     nodeBeingPlaced.id = nodeToInsert !== Infinity ? nodeToInsert : nodeIdCounter++;
-    nodeBeingPlaced.textContent = nodeBeingPlaced.id;
+    nodeBeingPlaced.textContent = zeroIndex.checked ? nodeBeingPlaced.id : parseInt(nodeBeingPlaced.id) + 1;
 
     graphArea.appendChild(nodeBeingPlaced);
 }
@@ -143,6 +147,9 @@ function onEdgeButtonClick() {
     button = document.getElementById("add-edge");
     button.style.backgroundColor = "#d3d4d5";
     const nodes = document.querySelectorAll(".node");
+    for (const node of nodes) {
+        node.style.backgroundColor = "white";
+    }
     selectingNode = true;
 }
 
@@ -334,6 +341,8 @@ function updateGraphTxt() {
 
 function onGenerateButtonClick() {
     const nodePositions = new Map();
+    resetToDefaults();
+    nodeIdCounter = 0;
     if (fixInPlace.checked) {
         for (const node of graphArea.querySelectorAll(".node")) {
             nodePositions.set(node.id, {
@@ -352,7 +361,7 @@ function onGenerateButtonClick() {
             const node = document.createElement("div");
             node.classList.add("node");
             node.classList.add("clickable");
-            node.id = i;
+            node.id = nodeIdCounter++;
             node.textContent = zeroIndex.checked ? node.id : parseInt(node.id) + 1;
             graphArea.appendChild(node);
             const savedPosition = nodePositions.get(node.id);
@@ -376,5 +385,94 @@ function onGenerateButtonClick() {
 }
 
 function onCalcButtonClick() {
-    alert("Mrzim svoj život")
+    const graphText = graphTxt.value.trim();
+
+    if (!graphText) {
+        alert("Graph input is empty.");
+        return;
+    }
+
+    doPyodide(graphText);
+}
+
+async function loadPythonFile(path) {
+    const response = await fetch(`./${path}`);
+
+    if (!response.ok) {
+        throw new Error(`Could not load ${path}: ${response.status}`);
+    }
+
+    const code = await response.text();
+
+    pyodide.FS.writeFile(path, code);
+}
+
+async function initializePyodide() {
+    pyodide = await loadPyodide();
+
+    pyodide.FS.mkdirTree("algorithms/classes");
+
+    await loadPythonFile("algorithms/__init__.py");
+    await loadPythonFile("algorithms/classes/__init__.py");
+
+    await loadPythonFile("algorithms/classes/graph.py");
+    await loadPythonFile("algorithms/classes/hampathsolver.py");
+    await loadPythonFile("algorithms/classes/helpfunctions.py");
+
+    await loadPythonFile("algorithms/bax_karp.py");
+    await loadPythonFile("algorithms/held_karp.py");
+
+    const response = await fetch("./main.py");
+
+    if (!response.ok) {
+        throw new Error(`Could not load main.py: ${response.status}`);
+    }
+
+    const mainCode = await response.text();
+
+    await pyodide.runPythonAsync(mainCode);
+
+    console.log("Python ready!");
+}
+
+async function doPyodide(graphText) {
+    try {
+        if (pyodideReady === null) {
+            pyodideReady = initializePyodide();
+        }
+
+        await pyodideReady;
+
+        const main = pyodide.globals.get("main");
+
+        const resultPy = main(graphText);
+
+        let result;
+
+        if (
+            resultPy !== null &&
+            typeof resultPy === "object" &&
+            typeof resultPy.toJs === "function"
+        ) {
+            result = resultPy.toJs();
+
+            if (typeof resultPy.destroy === "function") {
+                resultPy.destroy();
+            }
+        } else {
+            result = resultPy;
+        }
+
+        main.destroy();
+
+        if (Array.isArray(result)) {
+            alert(result.join(" "));
+        } else {
+            alert(String(result));
+        }
+
+    } catch (error) {
+        console.error(error);
+        alert(`Python error:\n${error.message}`);
+    }
 }
