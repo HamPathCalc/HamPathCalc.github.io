@@ -35,6 +35,12 @@ cpSync("img", "dist/img", {
     recursive: true
 });
 
+cpSync("algorithms", "dist/algorithms", {
+    recursive: true
+});
+
+copyFileSync("main.py", "dist/main.py");
+
 // Copy Bootstrap from node_modules
 copyFileSync(
     "node_modules/bootstrap/dist/css/bootstrap.min.css",
