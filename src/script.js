@@ -410,17 +410,17 @@ async function loadPythonFile(path) {
 async function initializePyodide() {
     pyodide = await loadPyodide();
 
-    pyodide.FS.mkdirTree("algorithms/classes");
+    pyodide.FS.mkdirTree("./algorithms/classes");
 
-    await loadPythonFile("algorithms/__init__.py");
-    await loadPythonFile("algorithms/classes/__init__.py");
+    await loadPythonFile("./algorithms/__init__.py");
+    await loadPythonFile("./algorithms/classes/__init__.py");
 
-    await loadPythonFile("algorithms/classes/graph.py");
-    await loadPythonFile("algorithms/classes/hampathsolver.py");
-    await loadPythonFile("algorithms/classes/helpfunctions.py");
+    await loadPythonFile("./algorithms/classes/graph.py");
+    await loadPythonFile("./algorithms/classes/hampathsolver.py");
+    await loadPythonFile("./algorithms/classes/helpfunctions.py");
 
-    await loadPythonFile("algorithms/bax_karp.py");
-    await loadPythonFile("algorithms/held_karp.py");
+    await loadPythonFile("./algorithms/bax_karp.py");
+    await loadPythonFile("./algorithms/held_karp.py");
 
     const response = await fetch("./main.py");
 
