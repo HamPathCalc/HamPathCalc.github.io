@@ -27,7 +27,7 @@ class HeldKarp(HamPathSolver):
                         dp_row[subset_k][v] = True
                         break
         
-        return dp_row[str(V)][0] if cycle else dp_row[str(V)]
+        return dp_row[str(V)]
 
 
 # if __name__ == "__main__":

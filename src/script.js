@@ -5,6 +5,27 @@ const graphTxt = document.getElementById("graph-txt");
 const oneIndex = document.getElementById("one-index");
 const zeroIndex = document.getElementById("zero-index");
 const fixInPlace = document.getElementById("fix-in-place");
+const methodItems = document.querySelectorAll(".method-item");
+const cycles = document.getElementById("cycles");
+const resultTxt = document.getElementById("result-txt");
+const heldKarp = document.getElementById("held-karp");
+const baxKarp = document.getElementById("bax-karp");
+let methodName = "BaxKarp";
+
+heldKarp.addEventListener("click", () => {
+    methodName = "HeldKarp";
+});
+
+baxKarp.addEventListener("click", () => {
+    methodName = "BaxKarp";
+});
+
+methodItems.forEach((methodItem) => {
+    methodItem.addEventListener("click", () => {
+        methodItems.forEach((item) => item.classList.remove("active"));
+        methodItem.classList.add("active");
+    });
+});
 
 let nodeBeingPlaced = null;
 let selectingNode = false;
@@ -385,12 +406,15 @@ function onGenerateButtonClick() {
 }
 
 function onCalcButtonClick() {
-    const graphText = graphTxt.value.trim();
+    let graphText = graphTxt.value.trim();
+
+    const cyclesOption = cycles.checked ? "True" : "False";
 
     if (!graphText) {
         alert("Graph input is empty.");
         return;
     }
+    graphText = `${graphText}\n${cyclesOption}`;
 
     doPyodide(graphText);
 }
@@ -445,7 +469,9 @@ async function doPyodide(graphText) {
 
         const main = pyodide.globals.get("main");
 
-        const resultPy = main(graphText);
+        const method = pyodide.globals.get(methodName);
+
+        const resultPy = main(graphText, method);
 
         let result;
 
@@ -466,9 +492,13 @@ async function doPyodide(graphText) {
         main.destroy();
 
         if (Array.isArray(result)) {
-            alert(result.join(" "));
+            result = result === null ? "No Hamiltonian path found." : result;
+            result = "Method used: " + methodName + "\nCycles: " + cycles.checked + "\n" + result
+            resultTxt.value = result;
         } else {
-            alert(String(result));
+            result = result === null ? "No Hamiltonian path found." : result;
+            result = "Method used: " + methodName + "\nCycles: " + cycles.checked + "\n" + result
+            resultTxt.value = result;
         }
 
     } catch (error) {
