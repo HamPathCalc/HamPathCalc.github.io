@@ -5,6 +5,28 @@ const graphTxt = document.getElementById("graph-txt");
 const oneIndex = document.getElementById("one-index");
 const zeroIndex = document.getElementById("zero-index");
 const fixInPlace = document.getElementById("fix-in-place");
+const methodItems = document.querySelectorAll(".method-item");
+const cycles = document.getElementById("cycles");
+const visualize = document.getElementById("visualize");
+const resultTxt = document.getElementById("result-txt");
+const heldKarp = document.getElementById("held-karp");
+const baxKarp = document.getElementById("bax-karp");
+let methodName = null;
+
+heldKarp.addEventListener("click", () => {
+    methodName = "HeldKarp";
+});
+
+baxKarp.addEventListener("click", () => {
+    methodName = "BaxKarp";
+});
+
+methodItems.forEach((methodItem) => {
+    methodItem.addEventListener("click", () => {
+        methodItems.forEach((item) => item.classList.remove("active"));
+        methodItem.classList.add("active");
+    });
+});
 
 let nodeBeingPlaced = null;
 let selectingNode = false;
@@ -104,6 +126,7 @@ function resetToDefaults() {
     deletingItem = false;
     nodeToDrag = null;
     draggingNode = false;
+    methodName = null;
 }
 
 function makeEdge(node1, node2) {
@@ -385,12 +408,19 @@ function onGenerateButtonClick() {
 }
 
 function onCalcButtonClick() {
-    const graphText = graphTxt.value.trim();
+    let graphText = graphTxt.value.trim();
+    const edges = document.querySelectorAll(".edge");
+    for(const edge of edges) {
+        edge.style.backgroundColor = "black";
+    }
+
+    const cyclesOption = cycles.checked ? "True" : "False";
 
     if (!graphText) {
         alert("Graph input is empty.");
         return;
     }
+    graphText = `${graphText}\n${cyclesOption}`;
 
     doPyodide(graphText);
 }
@@ -431,8 +461,6 @@ async function initializePyodide() {
     const mainCode = await response.text();
 
     await pyodide.runPythonAsync(mainCode);
-
-    console.log("Python ready!");
 }
 
 async function doPyodide(graphText) {
@@ -444,31 +472,97 @@ async function doPyodide(graphText) {
         await pyodideReady;
 
         const main = pyodide.globals.get("main");
-
-        const resultPy = main(graphText);
-
-        let result;
-
-        if (
-            resultPy !== null &&
-            typeof resultPy === "object" &&
-            typeof resultPy.toJs === "function"
-        ) {
-            result = resultPy.toJs();
-
-            if (typeof resultPy.destroy === "function") {
-                resultPy.destroy();
-            }
-        } else {
-            result = resultPy;
+        let resultPy;
+        
+        if (methodName === null) {
+            resultPy = main(graphText);
         }
+        else {
+            const method = pyodide.globals.get(methodName);
+            resultPy = main(graphText, method);
+        }
+
+        if (resultPy === null) {
+            resultTxt.value = "No Hamiltonian path found.";
+            return;
+        }
+
+        let result = null;
+
+        if (Array.isArray(resultPy)|| (typeof resultPy === "object" && resultPy !== null && typeof resultPy.toJs === "function")) {
+            result = resultPy.toJs();
+        }
+        else {
+            result = resultPy.toString();
+        }
+
+        let path;
+        let visualization;
 
         main.destroy();
 
         if (Array.isArray(result)) {
-            alert(result.join(" "));
+            result = result === null ? "No Hamiltonian path found." : result;
+            path = result[0];
+            visualization = result[1];
+            result = "Method used: " + methodName + "\nCycles: " + cycles.checked + "\n" + path.join(" -> ");
+            resultTxt.value = result;
+            if (visualize.checked) {
+                let stepDelay = 0;
+                const stepDuration = 3500;
+
+                for (const step of visualization) {
+                    const S = step[0];
+                    const v = step[1];
+                    const Hamiltonian = step[2];
+
+                    setTimeout(() => {
+                        for (const nodeId of S) {
+                            const node = document.getElementById(nodeId);
+                            if (node) {
+                                node.style.backgroundColor = "yellow";
+                            }
+                        }
+                        let nodeV = document.getElementById(v);
+                        if (nodeV) {
+                            nodeV.style.backgroundColor = "purple";
+                        }
+                    }, stepDelay);
+
+                    setTimeout(() => {
+                        for (const nodeId of S) {
+                            const node = document.getElementById(nodeId);
+                            if (node) {
+                                node.style.backgroundColor = Hamiltonian ? "green" : "red";
+                            }
+                        }
+                    }, stepDelay + stepDuration / 2);
+
+                    setTimeout(() => {
+                        for (const nodeId of S) {
+                            const node = document.getElementById(nodeId);
+                            if (node) {
+                                node.style.backgroundColor = "white";
+                            }
+                        }
+                    }, stepDelay + stepDuration);
+
+                    stepDelay += stepDuration + 2000;
+                }
+
+            }
+            for(let i = 0; i < path.length - 1; i++) {
+                const edgeId1 = `${path[i]}_${path[i + 1]}`;
+                const edgeId2 = `${path[i + 1]}_${path[i]}`;
+                const edge = document.getElementById(edgeId1) || document.getElementById(edgeId2);
+                if (edge) {
+                    edge.style.backgroundColor = "red";
+                }
+            }
         } else {
-            alert(String(result));
+            result = result === null ? "No Hamiltonian path found." : result;
+            result = "Method used: " + methodName + "\nCycles: " + cycles.checked + "\n" + result;
+            resultTxt.value = result;
         }
 
     } catch (error) {
