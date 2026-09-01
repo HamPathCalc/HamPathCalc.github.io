@@ -461,8 +461,6 @@ async function initializePyodide() {
     const mainCode = await response.text();
 
     await pyodide.runPythonAsync(mainCode);
-
-    console.log("Python ready!");
 }
 
 async function doPyodide(graphText) {
@@ -499,22 +497,66 @@ async function doPyodide(graphText) {
         }
 
         let path;
+        let visualization;
 
         main.destroy();
 
         if (Array.isArray(result)) {
             result = result === null ? "No Hamiltonian path found." : result;
-            path = result;
-            result = "Method used: " + methodName + "\nCycles: " + cycles.checked + "\n" + result.join(" -> ");
+            path = result[0];
+            visualization = result[1];
+            result = "Method used: " + methodName + "\nCycles: " + cycles.checked + "\n" + path.join(" -> ");
             resultTxt.value = result;
             if (visualize.checked) {
-                for(let i = 0; i < path.length - 1; i++) {
-                    const edgeId1 = `${path[i]}_${path[i + 1]}`;
-                    const edgeId2 = `${path[i + 1]}_${path[i]}`;
-                    const edge = document.getElementById(edgeId1) || document.getElementById(edgeId2);
-                    if (edge) {
-                        edge.style.backgroundColor = "red";
-                    }
+                let stepDelay = 0;
+                const stepDuration = 3500;
+
+                for (const step of visualization) {
+                    const S = step[0];
+                    const v = step[1];
+                    const Hamiltonian = step[2];
+
+                    setTimeout(() => {
+                        for (const nodeId of S) {
+                            const node = document.getElementById(nodeId);
+                            if (node) {
+                                node.style.backgroundColor = "yellow";
+                            }
+                        }
+                        let nodeV = document.getElementById(v);
+                        if (nodeV) {
+                            nodeV.style.backgroundColor = "purple";
+                        }
+                    }, stepDelay);
+
+                    setTimeout(() => {
+                        for (const nodeId of S) {
+                            const node = document.getElementById(nodeId);
+                            if (node) {
+                                node.style.backgroundColor = Hamiltonian ? "green" : "red";
+                            }
+                        }
+                    }, stepDelay + stepDuration / 2);
+
+                    setTimeout(() => {
+                        for (const nodeId of S) {
+                            const node = document.getElementById(nodeId);
+                            if (node) {
+                                node.style.backgroundColor = "white";
+                            }
+                        }
+                    }, stepDelay + stepDuration);
+
+                    stepDelay += stepDuration + 2000;
+                }
+
+            }
+            for(let i = 0; i < path.length - 1; i++) {
+                const edgeId1 = `${path[i]}_${path[i + 1]}`;
+                const edgeId2 = `${path[i + 1]}_${path[i]}`;
+                const edge = document.getElementById(edgeId1) || document.getElementById(edgeId2);
+                if (edge) {
+                    edge.style.backgroundColor = "red";
                 }
             }
         } else {
