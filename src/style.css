@@ -22,6 +22,27 @@ body {
     height: 100%;
 }
 
+.visualization-status {
+    position: absolute;
+    top: 0.75rem;
+    left: 50%;
+    z-index: 3;
+    max-width: calc(100% - 1.5rem);
+    padding: 0.4rem 0.75rem;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 0.35rem;
+    background-color: rgba(255, 255, 255, 0.92);
+    color: rgba(0, 0, 0, 0.8);
+    font-size: 0.85rem;
+    text-align: center;
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+
+.visualization-status:empty {
+    display: none;
+}
+
 #graph-txt {
     resize: none;
 }
@@ -110,6 +131,23 @@ body {
     cursor: pointer;
 }
 
+.visualization-controls {
+    display: flex;
+    width: 100%;
+    gap: 0.5rem;
+    padding: 0.35rem 0 0.15rem;
+}
+
+.visualization-button {
+    display: inline-flex;
+    flex: 1 1 0;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    height: 2.25rem;
+    padding: 0;
+}
+
 .method-menu {
     box-sizing: border-box;
     margin: 0;
@@ -120,10 +158,48 @@ body {
 }
 
 .method-item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
     padding: 0.75rem 1rem;
     color:rgba(0, 0, 0, 0.8);
     cursor: pointer;
     transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.method-item > span {
+    flex: 1;
+}
+
+.method-info {
+    display: contents;
+}
+
+.method-info-button {
+    padding: 0.15rem 0.35rem;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.method-info-button:hover,
+.method-info-button:focus-visible {
+    color: white;
+}
+
+.method-description {
+    flex-basis: 100%;
+    order: 3;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    color: rgba(0, 0, 0, 0.8);
+    white-space: normal;
+    background-color: rgba(0, 0, 0, 0.08);
 }
 
 .method-item:hover,
@@ -178,6 +254,14 @@ body {
 
     .app-layout > .row > section {
         height: 33.3333% !important;
+    }
+
+    #result-txt {
+        height: 50% !important;
+    }
+
+    #graph-txt {
+        height: 75% !important;
     }
 
     .app-layout > .row > section > .button-group {

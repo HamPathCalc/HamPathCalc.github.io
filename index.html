@@ -11,9 +11,19 @@
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet">
-        <link rel="stylesheet" href="./node_modules/bootstrap/dist/css/bootstrap.min.css">
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+        <!-- <link rel="stylesheet" href="./node_modules/bootstrap/dist/css/bootstrap.min.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css"> -->
         <script src="https://cdn.jsdelivr.net/pyodide/v314.0.6/full/pyodide.js"></script>
+        <script>
+            MathJax = {
+                tex: {
+                    inlineMath: [['\\(', '\\)']],
+                    displayMath: [['\\[', '\\]']]
+                }
+            };
+        </script>
+
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     </head>
     <body>
         <nav class="navbar bg-body-secondary">
@@ -95,16 +105,72 @@
         </nav>
         <main class="container-fluid app-layout py-3">
             <div class="row g-3 h-100">
-                <section class="col-12 col-md-2 h-100">
+                <section class="col-12 col-md-3 h-100">
                     <div id="top-panel" class="bg-success rounded-3 h-100">
                         <ul class="method-menu">
-                            <li id="held-karp" class="method-item">Bellman/Held-Karp (DP)</li>
-                            <li id="bax-karp" class="method-item">Bax-Karp (Inclusion-Exclusion)</li>
+                            <li id="held-karp" class="method-item">
+                                <span>Bellman/Held-Karp (DP)</span>
+                                <div class="method-info">
+                                    <button class="method-info-button" type="button" data-bs-toggle="collapse" data-bs-target="#held-karp-description" aria-expanded="false" aria-controls="held-karp-description" aria-label="Show Bellman/Held-Karp information">
+                                        <i class="bi bi-info-circle"></i>
+                                    </button>
+                                    <div id="held-karp-description" class="collapse method-description">
+                                        A bottom-up dynamic programming algorithm which solves the Hamiltnonian path problem. <br>
+                                        Algorithm memoizes the results in a table \(DP[S][v]\) where \(S\) is a subset of vertices and \(v\) is a vertex in \(S\). It is stored to TRUE if there is a Hamiltonian path that visits all vertices in \(S\) and ends at vertex \(v\). <br>
+                                        The recurrence relation is given as:
+                                        \[
+                                            DP[S][v] = \bigvee_{\substack{u \in S \setminus \{v\}\\(u,v) \in E}} (DP[S - \{v\}][u]),
+                                        \]
+                                        and the base case is:
+                                        \[
+                                            DP[\{v\}][v] = TRUE, \forall v \in V
+                                        \]
+                                        A Hamiltonian path in a graph \(G=(V,E)\) exists if \(DP[V][v]\) is TRUE for any vertex \(v \in V\). <br>
+                                        Time complexity: \(O(n^2 2^n)\) <br>
+                                        Space complexity: \(O(n 2^n)\)
+                                    </div>
+                                </div>
+                            </li>
+                            <li id="bax-karp" class="method-item">
+                                <span>Bax-Karp (Inclusion-Exclusion)</span>
+                                <div class="method-info">
+                                    <button class="method-info-button" type="button" data-bs-toggle="collapse" data-bs-target="#bax-karp-description" aria-expanded="false" aria-controls="bax-karp-description" aria-label="Show Bax-Karp information">
+                                        <i class="bi bi-info-circle"></i>
+                                    </button>
+                                    <div id="bax-karp-description" class="collapse method-description">
+                                        Bax-Karp algorithm calculates the number of all Hamiltonian paths in a graph using the principle of inclusion-exclusion. <br>
+                                        The formula used is given as:
+                                        \[
+                                            H_{n-1} (v_i, v_j) = \sum_{S \subseteq V} (-1)^{|S|} \cdot |W_S|,
+                                        \]
+                                        \[
+                                            |W_S| = A^{n-1}_{S},
+                                        \]
+                                        where \(H_{n-1}(v_i, v_j)\) is the number of Hamiltonian paths from \(v_i\) to \(v_j\), \(V\) is the set of vertices, \(S\) is a subset of vertices, and \(W_S\) is the number of walks of length \(n-1\) in the graph with vertices in \(S\) removed, and \(A_{S}\) is the adjacency matrix of the graph with vertices in \(S\) removed. <br>
+                                        Hamiltonian path exists if \(H_{n-1}(v_i, v_j) > 0\) for any pair of vertices \(v_i, v_j \in V\). <br>
+                                        If one wants to find Hamiltonian cycles, the only thing that needs to be changed is the length of the walks, which should be \(n\) instead of \(n-1\). <br>
+                                        Time complexity: \(O(n^3 \log n \cdot 2^n)\) <br>
+                                        Space complexity: \(O(n^2)\)
+                                    </div>
+                                </div>
+                            </li>
+                            <li id="rectangular" class="method-item">
+                                <span>Rectangular</span>
+                                <div class="method-info">
+                                    <button class="method-info-button" type="button" data-bs-toggle="collapse" data-bs-target="#rectangular-description" aria-expanded="false" aria-controls="rectangular-description" aria-label="Show Rectangular information">
+                                        <i class="bi bi-info-circle"></i>
+                                    </button>
+                                    <div id="rectangular-description" class="collapse method-description">
+                                        TBA after evaluation.
+                                    </div>
+                                </div>
+                            </li>
                         </ul>
                     </div>
                 </section>
-                <section class="col-12 col-md-8 h-100">
+                <section class="col-12 col-md-7 h-100">
                     <div id="graph-area" class="rounded-3 p-3 h-100">
+                        <div id="visualization-status" class="visualization-status" role="status" aria-live="polite"></div>
                     </div>
                 </section>
                 <section class="col-12 col-md-2 h-100">
@@ -115,7 +181,14 @@
                         <button id="calc-button" class="btn btn-primary col-12 h-100" onclick="onCalcButtonClick()">Find a path</button>
                     </div>
                     <textarea id="result-txt" class="form-control mb-2 h-25" aria-label="Calculation result" readonly placeholder="Results will be displayed here..."></textarea>
-                    <div class="empty-space"></div>
+                    <div class="visualization-controls mb-2" aria-label="Visualization controls">
+                        <button id="pause-visualization" type="button" class="btn btn-warning visualization-button" title="Pause visualization" aria-label="Pause visualization">
+                            <i class="bi bi-pause-fill"></i>
+                        </button>
+                        <button id="stop-visualization" type="button" class="btn btn-danger visualization-button" title="Stop visualization" aria-label="Stop visualization">
+                            <i class="bi bi-stop-fill"></i>
+                        </button>
+                    </div>
                 </section>
             </div>
         </main>
@@ -123,6 +196,6 @@
 
         <script src="./vendor/bootstrap/bootstrap.bundle.min.js"></script>
         <script src="./src/script.js"></script>
-        <script src="./node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+        <!-- <script src="./node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script> -->
     </body>
 </html>

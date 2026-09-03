@@ -1,9 +1,10 @@
 from algorithms.bax_karp import BaxKarp
 from algorithms.held_karp import HeldKarp
+from algorithms.rectangular import Rectangular
 from algorithms.classes.hampathsolver import HamPathSolver
 from algorithms.classes.graph import Graph
 
-def main(graph_text: str, Solver: HamPathSolver = HeldKarp):
+def main(graph_text: str, Solver: HamPathSolver = BaxKarp):
     # Parse the graph from the input text
     lines = graph_text.strip().split('\n')
     n = int(lines[0])

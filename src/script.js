@@ -9,8 +9,12 @@ const methodItems = document.querySelectorAll(".method-item");
 const cycles = document.getElementById("cycles");
 const visualize = document.getElementById("visualize");
 const resultTxt = document.getElementById("result-txt");
+const visualizationStatus = document.getElementById("visualization-status");
+const pauseVisualization = document.getElementById("pause-visualization");
+const stopVisualization = document.getElementById("stop-visualization");
 const heldKarp = document.getElementById("held-karp");
 const baxKarp = document.getElementById("bax-karp");
+const rectangular = document.getElementById("rectangular");
 let methodName = null;
 
 heldKarp.addEventListener("click", () => {
@@ -21,11 +25,19 @@ baxKarp.addEventListener("click", () => {
     methodName = "BaxKarp";
 });
 
+rectangular.addEventListener("click", () => {
+    methodName = "Rectangular";
+});
+
 methodItems.forEach((methodItem) => {
     methodItem.addEventListener("click", () => {
         methodItems.forEach((item) => item.classList.remove("active"));
         methodItem.classList.add("active");
     });
+});
+
+document.querySelectorAll(".method-info").forEach((methodInfo) => {
+    methodInfo.addEventListener("click", (event) => event.stopPropagation());
 });
 
 let nodeBeingPlaced = null;
@@ -38,6 +50,123 @@ let nodeToDrag = null;
 let draggingNode = false;
 let pyodide = null;
 let pyodideReady = null;
+let visualizationEvents = [];
+let visualizationTimers = [];
+let visualizationPaused = false;
+
+function clearVisualizationStatus() {
+    visualizationStatus.textContent = "";
+}
+
+function formatVisualizationVertex(vertex) {
+    return oneIndex.checked ? Number(vertex) + 1 : vertex;
+}
+
+function showVisualizationStep(subset, vertex) {
+    const displayedSubset = subset.map((item) => formatVisualizationVertex(item)).join(", ");
+    visualizationStatus.textContent = `Evaluating subset {${displayedSubset}}; last node: ${formatVisualizationVertex(vertex)}`;
+}
+
+function showPathVisualizationStep(vertex) {
+    visualizationStatus.textContent = `Reconstructing path; current node: ${formatVisualizationVertex(vertex)}`;
+}
+
+function clearVisualizationTimers() {
+    for (const timer of visualizationTimers) {
+        clearTimeout(timer);
+    }
+    visualizationTimers = [];
+}
+
+function scheduleVisualizationEvents() {
+    clearVisualizationTimers();
+    const startTime = Date.now();
+
+    for (const event of visualizationEvents) {
+        if (!event.active) {
+            continue;
+        }
+        const timer = setTimeout(() => {
+            if (!event.active || visualizationPaused) {
+                return;
+            }
+            event.active = false;
+            event.callback();
+            if (!visualizationEvents.some((pendingEvent) => pendingEvent.active)) {
+                visualizationEvents = [];
+            }
+        }, event.remaining);
+        visualizationTimers.push(timer);
+    }
+
+    visualizationEvents.startTime = startTime;
+}
+
+function pauseVisualizationAnimation() {
+    if (visualizationPaused || !visualizationEvents.some((event) => event.active)) {
+        return;
+    }
+
+    const elapsed = Date.now() - visualizationEvents.startTime;
+    clearVisualizationTimers();
+    for (const event of visualizationEvents) {
+        if (event.active) {
+            event.remaining = Math.max(0, event.remaining - elapsed);
+        }
+    }
+    visualizationPaused = true;
+    pauseVisualization.setAttribute("aria-label", "Resume visualization");
+    pauseVisualization.setAttribute("title", "Resume visualization");
+    pauseVisualization.innerHTML = '<i class="bi bi-play-fill"></i>';
+    alert("Visualization paused.");
+}
+
+function resumeVisualizationAnimation() {
+    if (!visualizationPaused) {
+        return;
+    }
+
+    visualizationPaused = false;
+    pauseVisualization.setAttribute("aria-label", "Pause visualization");
+    pauseVisualization.setAttribute("title", "Pause visualization");
+    pauseVisualization.innerHTML = '<i class="bi bi-pause-fill"></i>';
+    scheduleVisualizationEvents();
+}
+
+function stopVisualizationAnimation(notify = false) {
+    clearVisualizationTimers();
+    visualizationEvents = [];
+    visualizationPaused = false;
+    clearVisualizationStatus();
+    pauseVisualization.setAttribute("aria-label", "Pause visualization");
+    pauseVisualization.setAttribute("title", "Pause visualization");
+    pauseVisualization.innerHTML = '<i class="bi bi-pause-fill"></i>';
+
+    for (const node of graphArea.querySelectorAll(".node")) {
+        node.style.backgroundColor = "white";
+    }
+    if (notify) {
+        alert("Visualization stopped.");
+    }
+}
+
+pauseVisualization.addEventListener("click", () => {
+    if (visualizationPaused) {
+        resumeVisualizationAnimation();
+    } else if (visualizationEvents.some((event) => event.active)) {
+        pauseVisualizationAnimation();
+    } else {
+        alert("No visualization is currently running.");
+    }
+});
+
+stopVisualization.addEventListener("click", () => {
+    if (visualizationPaused || visualizationEvents.some((event) => event.active)) {
+        stopVisualizationAnimation(true);
+    } else {
+        alert("No visualization is currently running.");
+    }
+});
 
 function setNodePosition(node, clientX, clientY) {
     const graphRect = graphArea.getBoundingClientRect();
@@ -126,7 +255,24 @@ function resetToDefaults() {
     deletingItem = false;
     nodeToDrag = null;
     draggingNode = false;
-    methodName = null;
+
+    const nodes = document.querySelectorAll(".node");
+    for (const node of nodes) {
+        node.style.backgroundColor = "white";
+    }
+
+    const buttons = [
+        document.getElementById("add-node"),
+        document.getElementById("add-edge"),
+        document.getElementById("remove-item"),
+        document.getElementById("clean-all")
+    ];
+
+    for (const button of buttons) {
+        button?.classList.remove("active");
+    }
+
+    //methodItems.forEach((item) => item.classList.remove("active"));
 }
 
 function makeEdge(node1, node2) {
@@ -150,8 +296,8 @@ function makeEdge(node1, node2) {
 
 function onNodeButtonClick() {
     resetToDefaults();
-    button = document.getElementById("add-node");
-    button.style.backgroundColor = "#d3d4d5";
+    const addNodeButton = document.getElementById("add-node");
+    addNodeButton.classList.add("active");
     if (nodeBeingPlaced !== null) {
         return;
     }
@@ -167,8 +313,8 @@ function onNodeButtonClick() {
 
 function onEdgeButtonClick() {
     resetToDefaults();
-    button = document.getElementById("add-edge");
-    button.style.backgroundColor = "#d3d4d5";
+    const addEdgeButton = document.getElementById("add-edge");
+    addEdgeButton.classList.add("active");
     const nodes = document.querySelectorAll(".node");
     for (const node of nodes) {
         node.style.backgroundColor = "white";
@@ -178,8 +324,8 @@ function onEdgeButtonClick() {
 
 function onRemoveButtonClick() {
     resetToDefaults();
-    button = document.getElementById("remove-item");
-    button.style.backgroundColor = "#bb2d3b";
+    const removeItemButton = document.getElementById("remove-item");
+    removeItemButton.classList.add("active");
     deletingItem = true;
     const nodes = document.querySelectorAll(".node");
     const edges = document.querySelectorAll(".edge");
@@ -230,8 +376,8 @@ graphArea.addEventListener("click", (event) => {
     for (const edge of edges) {
         edge.classList.remove("clickable");
     }
-    button = document.getElementById("remove-item");
-    button.style.backgroundColor = "#dc3545";
+    const removeItemButton = document.getElementById("remove-item");
+    removeItemButton.classList.remove("active");
     updateGraphTxt();
 });
 
@@ -253,8 +399,8 @@ graphArea.addEventListener("click", (event) => {
     setNodePosition(nodeBeingPlaced, event.clientX, event.clientY);
 
     nodeBeingPlaced = null;
-    button = document.getElementById("add-node");
-    button.style.backgroundColor = "#f8f9fa";
+    const addNodeButton = document.getElementById("add-node");
+    addNodeButton.classList.remove("active");
     nodeToInsert = Infinity;
     updateGraphTxt();
 });
@@ -285,8 +431,8 @@ graphArea.addEventListener("click", (event) => {
         makeEdge(selectedNodes[0], selectedNodes[1]);
         selectedNodes = [];
         selectingNode = false;
-        button = document.getElementById("add-edge");
-        button.style.backgroundColor = "#f8f9fa";
+        const addEdgeButton = document.getElementById("add-edge");
+        addEdgeButton.classList.remove("active");
     }
     updateGraphTxt();
 });
@@ -409,6 +555,15 @@ function onGenerateButtonClick() {
 
 function onCalcButtonClick() {
     let graphText = graphTxt.value.trim();
+    if (oneIndex.checked) {
+        const lines = graphText.split("\n");
+        let txtEdges = lines.slice(1);
+        txtEdges = txtEdges.map(line => {
+            const [node1_id, node2_id] = line.trim().split(/\s+/);
+            return `${parseInt(node1_id) - 1} ${parseInt(node2_id) - 1}`;
+        }).join("\n");
+        graphText = `${lines[0]}\n${txtEdges}`;
+    }
     const edges = document.querySelectorAll(".edge");
     for(const edge of edges) {
         edge.style.backgroundColor = "black";
@@ -451,6 +606,7 @@ async function initializePyodide() {
 
     await loadPythonFile("./algorithms/bax_karp.py");
     await loadPythonFile("./algorithms/held_karp.py");
+    await loadPythonFile("./algorithms/rectangular.py");
 
     const response = await fetch("./main.py");
 
@@ -477,6 +633,10 @@ async function doPyodide(graphText) {
         if (methodName === null) {
             resultPy = main(graphText);
         }
+        else if (methodName === "Rectangular") {
+            const method = pyodide.globals.get(methodName);
+            resultPy = main(graphText, method);
+        }
         else {
             const method = pyodide.globals.get(methodName);
             resultPy = main(graphText, method);
@@ -498,6 +658,7 @@ async function doPyodide(graphText) {
 
         let path;
         let visualization;
+        let path_visualization;
 
         main.destroy();
 
@@ -505,9 +666,17 @@ async function doPyodide(graphText) {
             result = result === null ? "No Hamiltonian path found." : result;
             path = result[0];
             visualization = result[1];
+            path_visualization = result[2];
+            console.log(path_visualization);
             result = "Method used: " + methodName + "\nCycles: " + cycles.checked + "\n" + path.join(" -> ");
             resultTxt.value = result;
+            stopVisualizationAnimation();
             if (visualize.checked) {
+                if (visualization.length === 0 || path_visualization.length === 0) {
+                    alert("No visualization available for this type of graph.");
+                    return;
+                }
+                visualizationEvents = [];
                 let stepDelay = 0;
                 const stepDuration = 3500;
 
@@ -516,40 +685,83 @@ async function doPyodide(graphText) {
                     const v = step[1];
                     const Hamiltonian = step[2];
 
-                    setTimeout(() => {
+                    visualizationEvents.push({
+                        remaining: stepDelay,
+                        active: true,
+                        callback: () => {
+                        showVisualizationStep(S, v);
                         for (const nodeId of S) {
                             const node = document.getElementById(nodeId);
                             if (node) {
                                 node.style.backgroundColor = "yellow";
                             }
                         }
-                        let nodeV = document.getElementById(v);
+                        const nodeV = document.getElementById(v);
                         if (nodeV) {
                             nodeV.style.backgroundColor = "purple";
                         }
-                    }, stepDelay);
+                        }
+                    });
 
-                    setTimeout(() => {
+                    visualizationEvents.push({
+                        remaining: stepDelay + stepDuration / 2,
+                        active: true,
+                        callback: () => {
                         for (const nodeId of S) {
                             const node = document.getElementById(nodeId);
                             if (node) {
                                 node.style.backgroundColor = Hamiltonian ? "green" : "red";
                             }
                         }
-                    }, stepDelay + stepDuration / 2);
+                        }
+                    });
 
-                    setTimeout(() => {
+                    visualizationEvents.push({
+                        remaining: stepDelay + stepDuration,
+                        active: true,
+                        callback: () => {
                         for (const nodeId of S) {
                             const node = document.getElementById(nodeId);
                             if (node) {
                                 node.style.backgroundColor = "white";
                             }
                         }
-                    }, stepDelay + stepDuration);
+                        }
+                    });
 
                     stepDelay += stepDuration + 2000;
                 }
 
+                for (const step of path_visualization) {
+                    const nodeId = step[0];
+                    const isValid = step[1];
+
+                    visualizationEvents.push({
+                        remaining: stepDelay,
+                        active: true,
+                        callback: () => {
+                        showPathVisualizationStep(nodeId);
+                        const node = document.getElementById(nodeId);
+                        if (node) {
+                            node.style.backgroundColor = isValid ? "green" : "red";
+                        }
+                        }
+                    });
+
+                    stepDelay += stepDuration + 500;
+                }
+
+                visualizationEvents.push({
+                    remaining: stepDelay + stepDuration,
+                    active: true,
+                    callback: () => {
+                    clearVisualizationStatus();
+                    for (const node of document.querySelectorAll(".node")) {
+                        node.style.backgroundColor = "white";
+                    }
+                    }
+                });
+                scheduleVisualizationEvents();
             }
             for(let i = 0; i < path.length - 1; i++) {
                 const edgeId1 = `${path[i]}_${path[i + 1]}`;
