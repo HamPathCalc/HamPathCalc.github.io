@@ -29,8 +29,8 @@ class BaxKarp(HamPathSolver):
                 suma += sign * sum_all_matrix_elements(A)
 
         if cycle:
-            return suma // (2 * self.n) if self.n else 0
-        return suma
+            return "The number of Hamiltonian cycles in the graph is: " + str(suma // (2 * self.n)) if self.n else 0
+        return "The number of Hamiltonian paths in the graph is: " + str(suma)
 
 if __name__ == "__main__":
     graf = Graph(2, [(0, 1)])

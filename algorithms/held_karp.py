@@ -12,6 +12,7 @@ class HeldKarp(HamPathSolver):
         real_subsets = generate_subsets(V)[1:]
         path = []
         visualization = []
+        path_vizualization = []
         for subs in real_subsets:
             subsets[str(subs)] = subs
         
@@ -51,6 +52,7 @@ class HeldKarp(HamPathSolver):
                 continue
 
             path.append(i)
+            path_vizualization.append((i, True))
             break
         
         if len(path) == 0:
@@ -61,12 +63,13 @@ class HeldKarp(HamPathSolver):
             for v in new_subset:
                 if dp_row[str(new_subset)][v] and self.graph.adj_matrix[path[-1]][v] == 1:
                     path.append(v)
+                    path_vizualization.append((v, True))
                     break
         
         path.reverse()
         if cycle:
             path.append(path[0])
-        return path, visualization
+        return path, visualization, path_vizualization
 
 
 if __name__ == "__main__":
