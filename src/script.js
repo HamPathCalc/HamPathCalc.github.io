@@ -15,7 +15,7 @@ const stopVisualization = document.getElementById("stop-visualization");
 const heldKarp = document.getElementById("held-karp");
 const baxKarp = document.getElementById("bax-karp");
 const rectangular = document.getElementById("rectangular");
-let methodName = null;
+let methodName = "default";
 
 heldKarp.addEventListener("click", () => {
     methodName = "HeldKarp";
@@ -630,7 +630,7 @@ async function doPyodide(graphText) {
         const main = pyodide.globals.get("main");
         let resultPy;
         
-        if (methodName === null) {
+        if (methodName === "default") {
             resultPy = main(graphText);
         }
         else if (methodName === "Rectangular") {
@@ -775,6 +775,9 @@ async function doPyodide(graphText) {
             result = result === null ? "No Hamiltonian path found." : result;
             result = "Method used: " + methodName + "\nCycles: " + cycles.checked + "\n" + result;
             resultTxt.value = result;
+            if (visualize.checked) {
+                alert("No visualization available for this type of graph.");
+            }
         }
 
     } catch (error) {
