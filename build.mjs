@@ -1,9 +1,27 @@
 import {
     rmSync,
     mkdirSync,
-    cpSync,
-    copyFileSync
+    copyFileSync,
+    readdirSync,
+    statSync
 } from "node:fs";
+
+function copyDirectory(source, destination) {
+    mkdirSync(destination, {
+        recursive: true
+    });
+
+    for (const entry of readdirSync(source)) {
+        const sourcePath = `${source}/${entry}`;
+        const destinationPath = `${destination}/${entry}`;
+
+        if (statSync(sourcePath).isDirectory()) {
+            copyDirectory(sourcePath, destinationPath);
+        } else {
+            copyFileSync(sourcePath, destinationPath);
+        }
+    }
+}
 
 // Delete old build
 rmSync("dist", {
@@ -24,20 +42,26 @@ mkdirSync("dist/vendor/bootstrap-icons/fonts", {
     recursive: true
 });
 
+mkdirSync("dist/src", {
+    recursive: true
+});
+
+mkdirSync("dist/img", {
+    recursive: true
+});
+
+mkdirSync("dist/algorithms", {
+    recursive: true
+});
+
 // Copy your website
 copyFileSync("index.html", "dist/index.html");
 
-cpSync("src", "dist/src", {
-    recursive: true
-});
+copyDirectory("src", "dist/src");
 
-cpSync("img", "dist/img", {
-    recursive: true
-});
+copyDirectory("img", "dist/img");
 
-cpSync("algorithms", "dist/algorithms", {
-    recursive: true
-});
+copyDirectory("algorithms", "dist/algorithms");
 
 copyFileSync("main.py", "dist/main.py");
 
@@ -58,12 +82,9 @@ copyFileSync(
     "dist/vendor/bootstrap-icons/bootstrap-icons.min.css"
 );
 
-cpSync(
+copyDirectory(
     "node_modules/bootstrap-icons/font/fonts",
-    "dist/vendor/bootstrap-icons/fonts",
-    {
-        recursive: true
-    }
+    "dist/vendor/bootstrap-icons/fonts"
 );
 
 console.log("Build completed.");

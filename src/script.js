@@ -18,15 +18,20 @@ const rectangular = document.getElementById("rectangular");
 let methodName = "default";
 
 heldKarp.addEventListener("click", () => {
+    resetToDefaults();
     methodName = "HeldKarp";
 });
 
 baxKarp.addEventListener("click", () => {
+    resetToDefaults();
     methodName = "BaxKarp";
 });
 
 rectangular.addEventListener("click", () => {
+    resetToDefaults();
     methodName = "Rectangular";
+    selectingRectangularEndpoints = true;
+    alert("Select a start node and an end node for the rectangular method by clicking on them.");
 });
 
 methodItems.forEach((methodItem) => {
@@ -43,6 +48,8 @@ document.querySelectorAll(".method-info").forEach((methodInfo) => {
 let nodeBeingPlaced = null;
 let selectingNode = false;
 let selectedNodes = [];
+let rectangularEndpoints = [];
+let selectingRectangularEndpoints = false;
 let nodeIdCounter = 0;
 let deletingItem = false;
 let nodeToInsert = Infinity;
@@ -53,6 +60,7 @@ let pyodideReady = null;
 let visualizationEvents = [];
 let visualizationTimers = [];
 let visualizationPaused = false;
+let calculationVersion = 0;
 
 function clearVisualizationStatus() {
     visualizationStatus.textContent = "";
@@ -143,7 +151,7 @@ function stopVisualizationAnimation(notify = false) {
     pauseVisualization.innerHTML = '<i class="bi bi-pause-fill"></i>';
 
     for (const node of graphArea.querySelectorAll(".node")) {
-        node.style.backgroundColor = "white";
+        node.style.backgroundColor = node.classList.contains("rectangular-endpoint") ? "pink" : "white";
     }
     if (notify) {
         alert("Visualization stopped.");
@@ -249,15 +257,24 @@ const graphResizeObserver = new ResizeObserver(() => {
 graphResizeObserver.observe(graphArea);
 
 function resetToDefaults() {
+    stopVisualizationAnimation();
+    calculationVersion += 1;
+    methodName = "default";
+    if (nodeBeingPlaced?.parentNode) {
+        nodeBeingPlaced.remove();
+    }
     nodeBeingPlaced = null;
     selectingNode = false;
     selectedNodes = [];
+    rectangularEndpoints = [];
+    selectingRectangularEndpoints = false;
     deletingItem = false;
     nodeToDrag = null;
     draggingNode = false;
 
     const nodes = document.querySelectorAll(".node");
     for (const node of nodes) {
+        node.classList.remove("rectangular-endpoint");
         node.style.backgroundColor = "white";
     }
 
@@ -272,10 +289,14 @@ function resetToDefaults() {
         button?.classList.remove("active");
     }
 
-    //methodItems.forEach((item) => item.classList.remove("active"));
+    methodItems.forEach((item) => item.classList.remove("active"));
 }
 
 function makeEdge(node1, node2) {
+    if (node1 === node2) {
+        return;
+    }
+
     const edgeId1 = `${node1.id}_${node2.id}`;
     const edgeId2 = `${node2.id}_${node1.id}`;
     if (document.getElementById(edgeId1) || document.getElementById(edgeId2)) {
@@ -335,8 +356,8 @@ function onRemoveButtonClick() {
 }
 
 function onCleanAllButtonClick() {
-    graphArea.replaceChildren();
     resetToDefaults();
+    graphArea.replaceChildren(visualizationStatus);
     nodeIdCounter = 0;
     nodeToInsert = Infinity;
     updateGraphTxt();
@@ -361,8 +382,13 @@ graphArea.addEventListener("click", (event) => {
 
     if (clickedNode) {
         nodeToInsert = parseInt(clickedNode.id);
+        rectangularEndpoints = rectangularEndpoints.filter((node) => node !== clickedNode);
+        if (methodName === "Rectangular" && rectangularEndpoints.length < 2) {
+            selectingRectangularEndpoints = true;
+        }
         for (const edge of edges) {
-            if (edge.id.includes(clickedNode.id)) {
+            const [node1Id, node2Id] = edge.id.split("_");
+            if (node1Id === clickedNode.id || node2Id === clickedNode.id) {
                 edge.remove();
             }
         }
@@ -437,6 +463,33 @@ graphArea.addEventListener("click", (event) => {
     updateGraphTxt();
 });
 
+graphArea.addEventListener("click", (event) => {
+    if (!selectingRectangularEndpoints) {
+        return;
+    }
+
+    const selectedNode = [...graphArea.querySelectorAll(".node")].find((node) => {
+        const rect = node.getBoundingClientRect();
+        return event.clientX >= rect.left &&
+            event.clientX <= rect.right &&
+            event.clientY >= rect.top &&
+            event.clientY <= rect.bottom;
+    });
+
+    if (!selectedNode || rectangularEndpoints.includes(selectedNode)) {
+        return;
+    }
+
+    rectangularEndpoints.push(selectedNode);
+    selectedNode.classList.add("rectangular-endpoint");
+    selectedNode.style.backgroundColor = "pink";
+
+    if (rectangularEndpoints.length === 2) {
+        selectingRectangularEndpoints = false;
+    }
+    updateGraphTxt();
+});
+
 /*graphArea.addEventListener("click", (event) => {
     if (nodeBeingPlaced !== null || deletingItem || selectingNode) {
         return;
@@ -446,7 +499,7 @@ graphArea.addEventListener("click", (event) => {
 });*/
 
 graphArea.addEventListener("mousedown", (event) => {
-    if (nodeBeingPlaced !== null || deletingItem || selectingNode) {
+    if (nodeBeingPlaced !== null || deletingItem || selectingNode || selectingRectangularEndpoints) {
         return;
     }
     nodeToDrag = event.target.closest(".node");
@@ -521,7 +574,7 @@ function onGenerateButtonClick() {
         }
     }
 
-    graphArea.replaceChildren();
+    graphArea.replaceChildren(visualizationStatus);
     const graph_text = document.getElementById("graph-txt");
     const graph = graph_text.value.trim().split("\n");
     let n = parseInt(graph[0]);
@@ -555,6 +608,11 @@ function onGenerateButtonClick() {
 
 function onCalcButtonClick() {
     let graphText = graphTxt.value.trim();
+    if (!graphText) {
+        alert("Graph input is empty.");
+        return;
+    }
+
     if (oneIndex.checked) {
         const lines = graphText.split("\n");
         let txtEdges = lines.slice(1);
@@ -564,6 +622,14 @@ function onCalcButtonClick() {
         }).join("\n");
         graphText = `${lines[0]}\n${txtEdges}`;
     }
+    if (methodName === "Rectangular") {
+        if (rectangularEndpoints.length !== 2 || rectangularEndpoints.some((node) => !graphArea.contains(node))) {
+            alert("Select a start node and an end node for the rectangular method.");
+            return;
+        }
+        graphText = `${rectangularEndpoints[0].id} ${rectangularEndpoints[1].id}\n${graphText}`;
+    }
+
     const edges = document.querySelectorAll(".edge");
     for(const edge of edges) {
         edge.style.backgroundColor = "black";
@@ -571,13 +637,10 @@ function onCalcButtonClick() {
 
     const cyclesOption = cycles.checked ? "True" : "False";
 
-    if (!graphText) {
-        alert("Graph input is empty.");
-        return;
-    }
     graphText = `${graphText}\n${cyclesOption}`;
 
-    doPyodide(graphText);
+    const requestVersion = ++calculationVersion;
+    doPyodide(graphText, requestVersion);
 }
 
 async function loadPythonFile(path) {
@@ -619,13 +682,20 @@ async function initializePyodide() {
     await pyodide.runPythonAsync(mainCode);
 }
 
-async function doPyodide(graphText) {
+async function doPyodide(graphText, requestVersion) {
     try {
         if (pyodideReady === null) {
-            pyodideReady = initializePyodide();
+            pyodideReady = initializePyodide().catch((error) => {
+                pyodideReady = null;
+                pyodide = null;
+                throw error;
+            });
         }
 
         await pyodideReady;
+        if (requestVersion !== calculationVersion) {
+            return;
+        }
 
         const main = pyodide.globals.get("main");
         let resultPy;
@@ -671,6 +741,16 @@ async function doPyodide(graphText) {
             result = "Method used: " + methodName + "\nCycles: " + cycles.checked + "\n" + path.join(" -> ");
             resultTxt.value = result;
             stopVisualizationAnimation();
+
+            for (let i = 0; i < path.length - 1; i++) {
+                const edgeId1 = `${path[i]}_${path[i + 1]}`;
+                const edgeId2 = `${path[i + 1]}_${path[i]}`;
+                const edge = document.getElementById(edgeId1) || document.getElementById(edgeId2);
+                if (edge) {
+                    edge.style.backgroundColor = "red";
+                }
+            }
+
             if (visualize.checked) {
                 if (visualization.length === 0 || path_visualization.length === 0) {
                     alert("No visualization available for this type of graph.");
@@ -723,7 +803,7 @@ async function doPyodide(graphText) {
                         for (const nodeId of S) {
                             const node = document.getElementById(nodeId);
                             if (node) {
-                                node.style.backgroundColor = "white";
+                                node.style.backgroundColor = node.classList.contains("rectangular-endpoint") ? "pink" : "white";
                             }
                         }
                         }
@@ -757,19 +837,11 @@ async function doPyodide(graphText) {
                     callback: () => {
                     clearVisualizationStatus();
                     for (const node of document.querySelectorAll(".node")) {
-                        node.style.backgroundColor = "white";
+                        node.style.backgroundColor = node.classList.contains("rectangular-endpoint") ? "pink" : "white";
                     }
                     }
                 });
                 scheduleVisualizationEvents();
-            }
-            for(let i = 0; i < path.length - 1; i++) {
-                const edgeId1 = `${path[i]}_${path[i + 1]}`;
-                const edgeId2 = `${path[i + 1]}_${path[i]}`;
-                const edge = document.getElementById(edgeId1) || document.getElementById(edgeId2);
-                if (edge) {
-                    edge.style.backgroundColor = "red";
-                }
             }
         } else {
             result = result === null ? "No Hamiltonian path found." : result;
