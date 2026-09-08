@@ -4,6 +4,9 @@ Interactive web application for finding Hamiltonian paths and Hamiltonian cycles
 
 The application runs the Python algorithms directly in the browser with [Pyodide](https://pyodide.org/), so a separate Python server is not required for normal website use.
 
+![HamPathCalc interface](./img/whole_page.png)
+
+
 ## Table of Contents
 
 - [HamPathCalc](#hampathcalc)
@@ -17,8 +20,8 @@ The application runs the Python algorithms directly in the browser with [Pyodide
     - [1. Create or enter a graph](#1-create-or-enter-a-graph)
     - [2. Choose indexing](#2-choose-indexing)
     - [3. Choose a solver](#3-choose-a-solver)
-    - [4. Calculate the result](#4-calculate-the-result)
-    - [5. Use visualization controls](#5-use-visualization-controls)
+    - [4. Manage the options](#4-manage-the-options)
+    - [5. Calculate the result](#5-calculate-the-result)
   - [Graph Input Format](#graph-input-format)
   - [Local Setup](#local-setup)
     - [Prerequisites](#prerequisites)
@@ -69,6 +72,8 @@ The Rectangular solver is specialized for rectangular grid graphs. It uses a rec
 
 Use the text area on the right side of the application. The first line contains the number of nodes. Each following line contains one undirected edge.
 
+![Generating a graph](./img/generate_graph.png)
+
 Example:
 
 ```text
@@ -87,6 +92,8 @@ You can also create a graph manually:
 2. Click **add an edge**, then click the two nodes to connect.
 3. Use **remove a node/an edge** to delete an item.
 4. Use **clean all** to remove the current graph.
+
+![Buttons](./img/buttons.png)
 
 ### 2. Choose indexing
 
@@ -107,17 +114,23 @@ Select one of the solver entries on the left:
 
 When using **Rectangular**, click the desired start node and end node after selecting the solver.
 
-### 4. Calculate the result
+If no method is chosen, the program uses the default method (currently **Bax-Karp**)
 
-Enable **cycles** when you want to search for or count Hamiltonian cycles. Then click **Find a path**. The result panel displays the selected method, cycle setting, and either the path or the number of paths/cycles.
+### 4. Manage the options
+
+Currently, three options are available under the options menu:
+
+- *fix in place* which fixes the graph in place (i.e. it is not moved when generated again).
+- *cycles* which counts cycles instead of paths.
+- *visualize* which displays how an algorithm calculates a path, if available for a given algorithm. **(Currently supported for Bellman/Held-Karp algorithm only)**
+
+![Options menu](./img/options.png)
+
+### 5. Calculate the result
+
+After you have chosen your preferred options, click **Find a path**. The result panel displays the selected method, cycle setting, and either the path or the number of paths/cycles.
 
 For a path returned by a constructive solver, the solution edges are highlighted in red.
-
-### 5. Use visualization controls
-
-Enable **visualize** before clicking **Find a path** to see supported algorithm steps in the graph area. Use the pause/play button to pause or resume the animation, or use the stop button to end it.
-
-Not every solver result has visualization data. In that case, the application still displays the calculation result.
 
 ## Graph Input Format
 
@@ -138,7 +151,7 @@ Where:
 - Self-loops are not allowed.
 - The graph may contain isolated nodes, although a Hamiltonian path will usually not exist in that case.
 
-The website adds the cycle option internally when **Find a path** is clicked. Do not add `true` or `false` to the text area yourself.
+The website adds the cycle option internally when **Find a path** is clicked. **Do not add `true` or `false` to the text area yourself.**
 
 ## Local Setup
 
