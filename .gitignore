@@ -1,3 +1,4 @@
 node_modules/
 dist/
 rectangular1.py
+__pycache__/

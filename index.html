@@ -161,7 +161,16 @@
                                         <i class="bi bi-info-circle"></i>
                                     </button>
                                     <div id="rectangular-description" class="collapse method-description">
-                                        TBA after evaluation.
+                                        A method that solves the Hamiltonian path problem in rectangular graphs (rectangular grid graphs). <br>
+                                        The algorithm uses a recursive divide-and-conquer approach to split and solve the longest path problem in the given subgraphs. By demanding a graph to be Hamiltonian, it always find a Hamiltonian path if one exists. <br>
+                                        A rectangular grid graph is defined as a graph \(G=(V,E)\) where \(V\) is a set of vertices arranged in a rectangular grid and \(E\) is a set of edges connecting adjacent vertices. <br>
+                                        It is defined by its rectangule's width \(m\) and height \(n\), denoted as \( R(m, n) \) and in the algorithm we assume that \(m \geq n\). <br>
+                                        Cases \( n = 1 \) (line graph) and \( n = 2 \) are solved directly, while for \( n > 2 \) we have three cases: <br>
+                                        1. If \( R(m, n) \) can be stripped, i.e. it can be disjointly divided into an even-sized subgraph \( S \) (called strip) and a rectangular subgraph \( R(m', n') \) (called remainder), then the longest path in \( R(m, n) \) is the longest path in \( S \) plus the longest path in \( R(m', n') \). <br>
+                                        2. If \( R(m, n) \) can be split around the edge \( (p, q) \) into two rectangular subgraphs \(R_p \) and \( R_q \), then the longest path in \( R(m, n) \) is the longest path in \( R_p \) plus the longest path in \( R_q \) plus the edge \( (p, q) \). <br>
+                                        3. If none of the above cases apply but there exists a Hamiltonian path, then it is a so-called "prime" case, so it is either \( R(3, 3) \) or \( R(5, 4) \). <br>
+                                        Time complexity: \(O(mn)\) <br>
+                                        Space complexity: \(O(mn)\) <br>
                                     </div>
                                 </div>
                             </li>

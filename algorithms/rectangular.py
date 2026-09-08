@@ -11,7 +11,10 @@ class Rectangular(HamPathSolver):
             self.m, self.n, self.vertex_coords, self.coords = (None, None, None, None)
     
     def isRectangular(self):
-        nodes = self.graph.get_nodes()
+        nodes = list(range(self.graph.n))
+
+        if not nodes:
+            return False
         
         #1 A Graph must be connected
         distances = self.graph.bfs_distances(0)
@@ -28,6 +31,9 @@ class Rectangular(HamPathSolver):
             return False
         
         #3 case n=1
+        if len(nodes) == 1:
+            return 1, 1, {0: (0, 0)}, {(0, 0): 0}
+
         degree_one = [v for v in nodes if degrees[v] == 1]
 
         if len(degree_one) == 2 and all(degrees[v] <= 2 for v in nodes):
@@ -452,12 +458,14 @@ class Rectangular(HamPathSolver):
         memo[key] = result
         return None if result is None else result.copy()
     
-    def solve(self, s = None, t = None, cycle=False):
+    def solve(self, cycle=False, s=None, t=None):
         if self.vertex_coords is None:
             return "Graph is not rectangular"
         if s is None or t is None:
             s = 0
             t = self.n * self.m - 1
+        if not (0 <= s < self.n and 0 <= t < self.n) or s == t and self.n * self.m > 1:
+            return "Invalid start or end node"
         if cycle:
             return "This solver currently supports Hamiltonian paths only"
         if not self.isHamiltonian(s, t):

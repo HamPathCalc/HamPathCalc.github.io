@@ -66,6 +66,10 @@ body {
     align-items: center;
 }
 
+.node.rectangular-endpoint {
+    background-color: pink !important;
+}
+
 .edge {
     position: absolute;
     z-index: 1;

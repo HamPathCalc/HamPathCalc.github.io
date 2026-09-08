@@ -6,7 +6,14 @@ class BaxKarp(HamPathSolver):
     def __init__(self, graph):
         super().__init__(graph)
     
-    def solve(self, cycle=False):
+    def solve(self, cycle=False, s=None, t=None):
+        if self.n == 0:
+            return "The graph has no Hamiltonian path"
+        if self.n == 1:
+            if cycle:
+                return "The number of Hamiltonian cycles in the graph is: 0"
+            return "The number of Hamiltonian paths in the graph is: 1"
+
         self.V = [i for i in range(self.n)]
         self.subsets = generate_subsets(self.V)
         

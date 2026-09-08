@@ -6,7 +6,7 @@ class HeldKarp(HamPathSolver):
     def __init__(self, graph):
         super().__init__(graph)
     
-    def solve(self, cycle=False):
+    def solve(self, cycle=False, s=None, t=None):
         subsets = {}
         V = [i for i in range(self.n)]
         real_subsets = generate_subsets(V)[1:]
