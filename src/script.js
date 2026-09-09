@@ -741,7 +741,6 @@ async function doPyodide(graphText, requestVersion) {
             path = result[0];
             visualization = result[1];
             path_visualization = result[2];
-            console.log(path_visualization);
             result = "Method used: " + methodName + "\nCycles: " + cycles.checked + "\n" + path.join(" -> ");
             resultTxt.value = result;
             stopVisualizationAnimation();
