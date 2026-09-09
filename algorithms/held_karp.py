@@ -56,6 +56,8 @@ class HeldKarp(HamPathSolver):
             break
         
         if len(path) == 0:
+            if cycle:
+                return "No Hamiltonian Cycle exists"
             return "No Hamiltonian Path exists"
         
         while len(path) < len(V):

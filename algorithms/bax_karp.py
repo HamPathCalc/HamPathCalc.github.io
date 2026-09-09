@@ -8,6 +8,8 @@ class BaxKarp(HamPathSolver):
     
     def solve(self, cycle=False, s=None, t=None):
         if self.n == 0:
+            if cycle:
+                return "The graph has no Hamiltonian cycles"
             return "The graph has no Hamiltonian path"
         if self.n == 1:
             if cycle:

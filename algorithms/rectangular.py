@@ -464,7 +464,7 @@ class Rectangular(HamPathSolver):
         if s is None or t is None:
             s = 0
             t = self.n * self.m - 1
-        if not (0 <= s < self.n and 0 <= t < self.n) or s == t and self.n * self.m > 1:
+        if not (0 <= s < self.graph.n and 0 <= t < self.graph.n) or s == t and self.n * self.m > 1:
             return "Invalid start or end node"
         if cycle:
             return "This solver currently supports Hamiltonian paths only"

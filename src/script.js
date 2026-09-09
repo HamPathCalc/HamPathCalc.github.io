@@ -278,6 +278,10 @@ function resetToDefaults() {
         node.style.backgroundColor = "white";
     }
 
+    for (const edge of graphArea.querySelectorAll(".edge")) {
+        edge.style.backgroundColor = "black";
+    }
+
     const buttons = [
         document.getElementById("add-node"),
         document.getElementById("add-edge"),
